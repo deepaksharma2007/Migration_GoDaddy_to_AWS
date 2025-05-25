@@ -47,3 +47,24 @@ Before deploying the infrastructure, ensure you have the following:
    ```bash
    git clone https://github.com/deepaksharma2007/Migration_GoDaddy_to_AWS.git
    cd Migration_GoDaddy_to_AWS
+
+2. **Initialize Terraform**
+   ```bash
+   terraform init
+
+3. **Review and Modify Variables**
+
+Edit the ***terraform.tfvars*** file to customize variables such as region, VPC CIDR blocks, RDS instance types, and other parameters to match your requirements.
+
+4. **Plan the Deployment**
+   ```bash
+   terraform plan```
+Review the execution plan to understand the resources that will be created or modified.**
+
+5. **Apply the Configuration**
+   ```bash
+   terraform apply
+Confirm the action when prompted. Terraform will provision the specified AWS resources.
+
+6. **Verify the Deployment**
+  After successful execution, Terraform will output relevant information such as VPC IDs, RDS endpoints, and other resource identifiers.
