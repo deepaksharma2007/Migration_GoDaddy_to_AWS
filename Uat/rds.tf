@@ -24,7 +24,7 @@ resource "aws_security_group" "rds_sg" {
 }
 
 resource "aws_db_instance" "rds_instance" {
-  identifier             = "my-rds-instance"
+  identifier             = "my-uat-rds-db"
   allocated_storage      = 20
   storage_type           = "gp3"
   engine                 = "mysql" 
@@ -44,10 +44,10 @@ resource "aws_db_instance" "rds_instance" {
   }
 }
 resource "aws_db_subnet_group" "rds_subnet_group" {
-  name       = "rds-subnet-group"
+  name       = "rds-subnet-group1"
   subnet_ids = [aws_subnet.myprivate1.id, aws_subnet.myprivate2.id] 
 
   tags = {
-    Name = "rds-subnet-group"
+    Name = "rds-subnet-group1"
   }
 }

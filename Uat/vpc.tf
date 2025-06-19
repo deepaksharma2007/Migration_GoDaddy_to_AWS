@@ -1,37 +1,44 @@
-provider "aws" {
-    region = "ap-south-1"
-  
-}
 
 # To create a VPC 
 resource "aws_vpc" "main" {
-  cidr_block = "10.0.0.0/16"
+  cidr_block = var.vpc_cidr
 
   tags = {
-    Name = "devOps-VPC"
+    Name = var.vpc_name
   }
 }
 
 # TO create a Public Subnet 
 resource "aws_subnet" "mypublic" {
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.0.1.0/24"
+  cidr_block              = var.public_subnet_cidr
   map_public_ip_on_launch = true
-  availability_zone       = "ap-south-1a"
+  availability_zone       = "${var.aws_region}a"
 
   tags = {
-    Name = "public-subnet"
+    Name = var.public_subnet_name
   }
 }
 
-# To create private Subnet 
-resource "aws_subnet" "myprivate" {
+# To create private Subnet-1
+resource "aws_subnet" "myprivate1" {
   vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = "ap-south-1b"
+  cidr_block        = var.private_subnet_cidr_1
+  availability_zone = "${var.aws_region}b"
 
   tags = {
-    Name = "private-subnet"
+    Name = "${var.private_subnet_name}1"
+  }
+}
+
+# To create private Subnet-2
+resource "aws_subnet" "myprivate2" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.private_subnet_cidr_2
+  availability_zone = "${var.aws_region}c"
+
+  tags = {
+    Name = "${var.private_subnet_name}2"
   }
 }
 
@@ -93,9 +100,14 @@ resource "aws_route_table" "private" {
   }
 }
 
-# To associate private subnet with route table
-resource "aws_route_table_association" "private" {
-  subnet_id      = aws_subnet.myprivate.id
+# To associate private subnet-1 with route table
+resource "aws_route_table_association" "private-1" {
+  subnet_id      = aws_subnet.myprivate1.id
+  route_table_id = aws_route_table.private.id
+}
+# To associate private subnet-2 with route table
+resource "aws_route_table_association" "private-2" {
+  subnet_id      = aws_subnet.myprivate2.id
   route_table_id = aws_route_table.private.id
 }
 
@@ -166,82 +178,3 @@ resource "aws_network_acl_association" "private_nacl_association" {
   network_acl_id = aws_network_acl.private_nacl.id
 }
 */
-
-# Create Security Group allow port 80 and ssh  
-resource "aws_security_group" "public_sg" {
-  vpc_id = aws_vpc.main.id
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
- ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "public-security-group"
-  }
-}
-
-# Enable SSM :- Create IAM role 
-resource "aws_iam_role" "ssm_role" {
-  name = "ssm-role"
-
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Principal": {
-        "Service": "ec2.amazonaws.com"
-      },
-      "Effect": "Allow",
-      "Sid": ""
-    }
-  ]
-}
-EOF
-}
-
-# Enable SSM :- attached required permission with above Role 
-resource "aws_iam_policy_attachment" "ssm_attach" {
-  name       = "ssm-policy-attachment"
-  roles      = [aws_iam_role.ssm_role.name]
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-}
-
-# Create instance profile 
-resource "aws_iam_instance_profile" "ssm_profile" {
-  name = "ssm-instance-profile"
-  role = aws_iam_role.ssm_role.name
-}
-
-# Launch EC2 instance in public Subnet 
-resource "aws_instance" "public_instance" {
-  ami           = "ami-0d682f26195e9ec0f"
-  instance_type = "t2.micro"
-  subnet_id     = aws_subnet.mypublic.id
-  associate_public_ip_address = true
-  iam_instance_profile = aws_iam_instance_profile.ssm_profile.name
-  vpc_security_group_ids = [aws_security_group.public_sg.id]
-   key_name = "my-dev-key"
-
-  tags = {
-    Name = "public-ec2-instance"
-  }
-}
